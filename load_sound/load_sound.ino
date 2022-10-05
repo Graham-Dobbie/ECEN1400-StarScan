@@ -25,16 +25,18 @@ bool serial_handshake( int timeout){
   byte stream[2];
 
   int start_time = millis();
+
+  Serial.write("S");
   
   while(!rec){
 
-    if((stream[0] == 111) and (stream[1] == 011)){
-      Serial.write(100);
+    if((stream[0] == 79) and (stream[1] == 75)){
+      Serial.write("T");
       return true;
     }
     else if((millis() - start_time) >= timeout*1000){
       
-      Serial.write(404);
+      Serial.write("F");
       return false;
       
     }
@@ -45,6 +47,8 @@ bool serial_handshake( int timeout){
         // read the incoming byte:
         stream[0] = stream[1];
         stream[1] = Serial.read();
+
+        Serial.println(stream[0]);
       }
     }
     
@@ -55,43 +59,43 @@ bool serial_handshake( int timeout){
 void setup() {
 
   Serial.begin(115200);
-  while (!Serial) {
-    ; // wait for serial port to connect. Needed for native USB port only
-  }
-
-  // Checks for SD card
-  Serial.print("Initializing SD card...");
-
-  if (!SD.begin(chip_slct)) {
-    Serial.println("initialization failed!");
-    while (1);
-  }
-
-  Serial.println("initialization done.");
-
-  //Starts checking for sound files
-  Serial.println("Checking for sound files");
-  if (SD.exists("sounds")) {
-
-    Serial.println("There is a sounds directory");
-
-  } else {
-
-    Serial.println("There is not a sound file directory... I will make one for you!");
-    if(!SD.mkdir("sounds")) {
-      Serial.println("Error creating file");
-      while(1);
-    }
-    else{
-      Serial.println("Created sounds folder");
-    }
-  }
+//  while (!Serial) {
+//    ; // wait for serial port to connect. Needed for native USB port only
+//  }
+//
+//  // Checks for SD card
+//  Serial.print("Initializing SD card...");
+//
+//  if (!SD.begin(chip_slct)) {
+//    Serial.println("initialization failed!");
+//    while (1);
+//  }
+//
+//  Serial.println("initialization done.");
+//
+//  //Starts checking for sound files
+//  Serial.println("Checking for sound files");
+//  if (SD.exists("sounds")) {
+//
+//    Serial.println("There is a sounds directory");
+//
+//  } else {
+//
+//    Serial.println("There is not a sound file directory... I will make one for you!");
+//    if(!SD.mkdir("sounds")) {
+//      Serial.println("Error creating file");
+//      while(1);
+//    }
+//    else{
+//      Serial.println("Created sounds folder");
+//    }
+//  }
 
   Serial.println("To upload a file close the Serial Moniter");
 
   delay(2000);
 
-  serial_handshake(10);
+  serial_handshake(1);
   
 
 //  int incoming = 0;
