@@ -28,11 +28,9 @@ void loop()
   {
     return;
   }
- 
-  //Serial.print("UID tag :");
-  //Serial.println();
   String content= "";
   byte letter;
+  String teacherUID = "41 92 B9 74";
   for (byte i = 0; i < mfrc522.uid.size; i++) 
   {
      //Serial.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");
@@ -41,27 +39,19 @@ void loop()
      content.concat(String(mfrc522.uid.uidByte[i], HEX));
      
   }
-//  Serial.println(content);
-//  byte first = 1;
-//  Serial.println();
-//  if(content == "41 92 b9 74") {
-//    lcd.print("Teacher tag confirmed!!");
-//    return;
-//  } else {
-//    if(first) {
-//      lcd.print("Incorrect tag");
-//      first = 0;
-//    }
-//    
-//  }
-
-
-if(first) {
-  lcd.print("7");
-  first = 0;
-}
-
-
-  
+  content.toUpperCase();
+  if(content.substring(1) == teacherUID) {
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("teacher tag");
+    lcd.setCursor(0,1);
+    lcd.print(" confirmed!");
+    return;
+  } else {
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("Incorrect tag");
+    return;
+  }
   
 }
