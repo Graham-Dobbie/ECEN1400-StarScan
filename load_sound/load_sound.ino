@@ -56,6 +56,39 @@ bool serial_handshake( int timeout){
 }
 
 
+bool recieve_packet(int packet_numb, float timeout){
+
+  int start_time = millis();
+  
+  Serial.write(packet_numb);
+  
+  bool rec = false;
+  byte stream[2];
+
+  while(!rec){
+
+    if((stream[0] == packet_numb) and (stream[1] > 0)){
+      return true;
+    }
+    else if((millis() - start_time) >= timeout*1000){
+      
+      return false;
+      
+    }
+
+    else{
+       if (Serial.available() > 0) {
+        
+        // read the incoming byte:
+        stream[0] = stream[1];
+        stream[1] = Serial.read();
+      }
+    }
+    
+  }
+}
+
+
 void setup() {
 
   Serial.begin(115200);
@@ -98,31 +131,14 @@ void setup() {
   serial_handshake(1);
   
 
-//  int incoming = 0;
-//
-//  if (Serial.available() > 0) {
-//    // read the incoming byte:
-//    incoming = Serial.read();  
-//  }
-//
-//  
-//  
-
-
 }
+
+
+
 
 void loop() {
   // put your main code here, to run repeatedly:
 
-//  int incoming = 0;
-//
-//    if (Serial.available() > 0) {
-//    // read the incoming byte:
-//    incoming = Serial.read();
-//
-//    // say what you got:
-//    Serial.print("I received: ");
-//    Serial.println(incoming, DEC);
-//  }
+  recieve_packet(1,10);
 
 }

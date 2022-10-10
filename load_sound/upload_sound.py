@@ -7,8 +7,8 @@ import time
 ser = serial.Serial()
 
 ser.timeout=1
-ser.port='COM7'
-ser.baudrate=115200
+ser.port='COM18'
+ser.baudrate= 115200
 ser.open()
 
 def send_handshake():
@@ -29,11 +29,19 @@ def send_handshake():
         # print(ack_code)
         ack_code = ser.read(1)
 
-    print( "Acknowledged Handshake")
+    if (ack_code != b'T'):
+        print( "Acknowledged Handshake")
+        return True
+    else:
+        print( "Failed Handshake")
+        return False
     print()
 
-def send_packet(packet, timeout):
-    pass
+def send_packet():
+    
+    while(1):
+        print(ser.read())
+
 
 
 time.sleep(1);
@@ -62,6 +70,8 @@ raw_data = wav_file.read()
 data_len = len(raw_data)
 
 
+send_handshake()
+send_packet()
 
 
 
