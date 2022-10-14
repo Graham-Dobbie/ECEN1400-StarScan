@@ -29,46 +29,67 @@ void setup()
   
 
 }
+
+String scanFunction() {
+  bool scannedCard = false;
+  String content= "";
+
+  while(!scannedCard) {
+      if ( ! mfrc522.PICC_IsNewCardPresent()) 
+    {
+      //return "none";
+    }
+    
+    if ( ! mfrc522.PICC_ReadCardSerial()) 
+    {
+      //return "none";
+    }
+    //String content= "";
+    byte letter;
+    for (byte i = 0; i < mfrc522.uid.size; i++) 
+    {
+       //Serial.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");
+       //Serial.print(mfrc522.uid.uidByte[i], HEX);
+       content.concat(String(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " "));
+       content.concat(String(mfrc522.uid.uidByte[i], HEX));
+       
+    }
+    content.toUpperCase();
+
+    if(content == "") {
+      scannedCard = false;
+    } else {
+      scannedCard = true;
+    }
+  
+  }
+  return content;
+   
+  
+}
+
 void loop() 
 {
-  if ( ! mfrc522.PICC_IsNewCardPresent()) 
-  {
-    return;
+  String content = scanFunction();
+  Serial.print(content);
+  if(content == "") {
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("Nothing scanned");
   }
-  
-  if ( ! mfrc522.PICC_ReadCardSerial()) 
-  {
-    return;
-  }
-  String content= "";
-  byte letter;
   String teacherUID = "41 92 B9 74";
-  for (byte i = 0; i < mfrc522.uid.size; i++) 
-  {
-     //Serial.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");
-     //Serial.print(mfrc522.uid.uidByte[i], HEX);
-     content.concat(String(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " "));
-     content.concat(String(mfrc522.uid.uidByte[i], HEX));
-     
-  }
-  content.toUpperCase();
-
-//  if(myFile) {
-//    myFile.println(content.substring(1));
-//    Serial.println(content.substring(1));
-//  }
   if(content.substring(1) == teacherUID) {
     lcd.clear();
     lcd.setCursor(0,0);
     lcd.print("teacher tag");
     lcd.setCursor(0,1);
     lcd.print(" confirmed!");
-    //return;
+    return;
   } else {
     lcd.clear();
     lcd.setCursor(0,0);
     lcd.print("Incorrect tag");
-    //return;
+    return;
   }
   
 }
