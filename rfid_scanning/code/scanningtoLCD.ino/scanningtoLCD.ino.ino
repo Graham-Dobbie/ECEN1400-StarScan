@@ -70,25 +70,37 @@ String scanFunction() {
 
 void loop() 
 {
-  String content = scanFunction();
-  Serial.print(content);
-  String teacherUID = "41 92 B9 74";
-//  if(content.substring(1) == teacherUID) {
-//    lcd.clear();
-//    lcd.setCursor(0,0);
-//    lcd.print("teacher tag");
-//    lcd.setCursor(0,1);
-//    lcd.print(" confirmed!");
-//    return;
-//  } else {
-//    lcd.clear();
-//    lcd.setCursor(0,0);
-//    lcd.print("Incorrect tag");
-//    return;
-//  }
-
   lcd.clear();
-  lcd.print(content);
-  return;
+  lcd.setCursor(0,0);
+  lcd.print("Scan teacher tag: ");
+  String content = scanFunction();
+  //Serial.print(content);
+  String teacherUID = "41 92 B9 74";
+  
+  if(content.substring(1) == teacherUID) {
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("teacher tag");
+    lcd.setCursor(0,1);
+    lcd.print(" confirmed!");
+    delay(2000);
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("Scan student tag: ");
+    content = scanFunction();
+    lcd.clear();
+    lcd.setCursor(0,1);
+    lcd.print(content);
+    return;
+  } else {
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("Incorrect tag");
+    return;
+  }
+
+//  lcd.clear();
+//  lcd.print(content);
+//  return;
   
 }
