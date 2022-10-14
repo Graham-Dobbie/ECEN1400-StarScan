@@ -1,11 +1,16 @@
 #include <SPI.h>
 #include <MFRC522.h>
 #include <LiquidCrystal.h>
+#include <SD.h>
  
 #define SS_PIN 10
 #define RST_PIN 9
 MFRC522 mfrc522(SS_PIN, RST_PIN);   
 LiquidCrystal lcd(9,8,6,4,3,2);
+
+File myFile;
+const int chipSelectSD = 7;
+
 void setup()
 {
   Serial.begin(9600);  
@@ -14,6 +19,13 @@ void setup()
   Serial.println("Approximate your card to the reader...");
   Serial.println();
   lcd.begin(16,2);
+
+  if (!SD.begin(chipSelectSD)) {
+      Serial.println("initialization failed!");
+      while (1);
+      }
+
+  myFile = SD.open("students.txt", FILE_WRITE);
   
 
 }
@@ -40,18 +52,23 @@ void loop()
      
   }
   content.toUpperCase();
-  if(content.substring(1) == teacherUID) {
-    lcd.clear();
-    lcd.setCursor(0,0);
-    lcd.print("teacher tag");
-    lcd.setCursor(0,1);
-    lcd.print(" confirmed!");
-    return;
-  } else {
-    lcd.clear();
-    lcd.setCursor(0,0);
-    lcd.print("Incorrect tag");
-    return;
+
+  if(myFile) {
+    myFile.println(content.substring(1));
+    Serial.println(content.substring(1));
   }
+//  if(content.substring(1) == teacherUID) {
+//    lcd.clear();
+//    lcd.setCursor(0,0);
+//    lcd.print("teacher tag");
+//    lcd.setCursor(0,1);
+//    lcd.print(" confirmed!");
+//    //return;
+//  } else {
+//    lcd.clear();
+//    lcd.setCursor(0,0);
+//    lcd.print("Incorrect tag");
+//    //return;
+//  }
   
 }
