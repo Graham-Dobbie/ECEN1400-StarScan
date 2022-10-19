@@ -27,44 +27,48 @@ void setup()
 
   // myFile = SD.open("students.txt", FILE_WRITE);
   
+  
 
 }
 
-String scanFunction() {
+String scanFunction(int timeout) {
   bool scannedCard = false;
   String content= "";
 
-  while(!scannedCard) {
-      if ( ! mfrc522.PICC_IsNewCardPresent()) 
-    {
-      //return "none";
-    }
-    
-    if ( ! mfrc522.PICC_ReadCardSerial()) 
-    {
-      //return "none";
-    }
-    //String content= "";
-    byte letter;
-    for (byte i = 0; i < mfrc522.uid.size; i++) 
-    {
-       //Serial.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");
-       //Serial.print(mfrc522.uid.uidByte[i], HEX);
-       content.concat(String(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " "));
-       content.concat(String(mfrc522.uid.uidByte[i], HEX));
-       
-    }
-    content.toUpperCase();
-
-    if(content == "") {
-      scannedCard = false;
-    } else {
-      scannedCard = true;
-    }
-  
+  bool use_timeout = true;
+  if(timeout < 0){
+    use_timeout = false;
   }
-  return content;
-   
+
+  unsigned int start = millis();
+
+  while(!scannedCard or (use_timeout and (millis() - start > timeout*1000))) {
+      if (mfrc522.PICC_IsNewCardPresent() and mfrc522.PICC_ReadCardSerial()) {
+//      byte letter;
+        for (byte i = 0; i < mfrc522.uid.size; i++) 
+        {
+         //Serial.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");
+          //Serial.print(mfrc522.uid.uidByte[i], HEX);
+          content.concat(String(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " "));
+          content.concat(String(mfrc522.uid.uidByte[i], HEX));
+       
+        }
+        content.toUpperCase();
+
+        if(content == "") {
+          scannedCard = false;
+        } else {
+          scannedCard = true;
+        }
+      }
+  }
+  if (scannedCard){
+    return content;
+   }
+
+   else{
+    return "No Card Found";
+   }
   
 }
 
@@ -72,9 +76,7 @@ void loop()
 {
   lcd.clear();
   lcd.setCursor(0,0);
-  lcd.print("Scan teacher tag: ");
-  String content = scanFunction();
-  //Serial.print(content);
+  String content = scanFunction(-1);
   String teacherUID = "41 92 B9 74";
   
   if(content.substring(1) == teacherUID) {
@@ -87,11 +89,14 @@ void loop()
     lcd.clear();
     lcd.setCursor(0,0);
     lcd.print("Scan student tag: ");
-    content = scanFunction();
+
+    String student = scanFunction(1);
     lcd.clear();
     lcd.setCursor(0,1);
-    lcd.print(content);
+    lcd.print(student);
+    delay(1000);
     return;
+    
   } else {
     lcd.clear();
     lcd.setCursor(0,0);
@@ -99,8 +104,8 @@ void loop()
     return;
   }
 
-//  lcd.clear();
-//  lcd.print(content);
-//  return;
+  lcd.clear();
+  lcd.print(content);
+  return;
   
 }
