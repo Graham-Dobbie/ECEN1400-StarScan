@@ -88,7 +88,7 @@ int User::setPoints(int points) {
 
 int User::getPoints() { return points_; }
 
-int User::loadUser(std::string load_string) { // uid1,uid2,uid3,uid4,name,points
+int User::load(std::string load_string) { // uid1,uid2,uid3,uid4,name,points
 
     std::string components[10];
     int numb_splits = split(load_string, components, 10);
@@ -107,7 +107,7 @@ int User::loadUser(std::string load_string) { // uid1,uid2,uid3,uid4,name,points
     return 0;
 }
 
-std::string User::saveUser() { // uid1,uid2,uid3,uid4,name,points
+std::string User::save() { // uid1,uid2,uid3,uid4,name,points
 
     std::string data;
 
@@ -200,4 +200,66 @@ int User::split(std::string line, std::string comps[], int max_size) {
     } else {
         return comp_pos + 1;
     }
+}
+
+Database::Database() : file_path_(""), max_users_(0) {}
+
+Database::Database(std::string path) : file_path_(path), max_users_(50) {
+
+    std::ifstream file;
+
+    file.open(file_path_);
+    if (file.fail()) {
+        std::cout << "file failed to open" << std::endl;
+        return;
+    }
+
+    int total_users = 0;
+    User load_user;
+
+    while((!file.eof()) and (total_users < max_users_)){
+
+        std::string line;
+        std::getline(file, line);
+
+        load_user.load(line);
+
+        if(load_user.load(line) == 0){
+            user_index_[total_users] = load_user.getUID();
+            total_users++;
+            
+        }else{
+            std::cout << "Warning: line '" << line << "' is not a valid user" << std::endl;
+        }
+
+    }
+
+    if (!file.eof()){
+        std::cout << "Warning: you reached the max amount of users some might not have been added" << std::endl;
+    }
+
+}
+
+
+User Database::loadUser(std::string UID){
+
+    std::ifstream file;
+    std::string line;
+    User return_user = User();
+    
+    int uid_index = -1;
+    for(int i = 0; i < max_users_; i++){
+        std::getline(file , line);
+
+        if( user_index_[i] == UID){
+            return_user.load(line);
+            return return_user;
+        }
+    }
+    
+    std::cout << "Couldn't find user" << std::endl;
+    return return_user;
+
+
+
 }

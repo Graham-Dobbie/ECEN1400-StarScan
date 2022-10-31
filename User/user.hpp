@@ -1,8 +1,7 @@
 #ifndef User_h
 #define User_h
 
-#include <bitset>
-#include <cstddef>
+#include <fstream>
 #include <iostream>
 #include <map>
 #include <string>
@@ -18,17 +17,14 @@ class User {
     std::string getUID();
     int setUID(std::string uid);
 
-    std::string getUserDataByElement(std::string element);
-    int writeUserDataByElement(std::string element, std::string value);
-
     int givePoint();
     int givePoints(int points);
     int setPoints(int points);
 
     int getPoints();
 
-    int loadUser(std::string load_string);
-    std::string saveUser();
+    int load(std::string load_string);
+    std::string save();
 
     int chrToInt(char hex);
     int intToChr(char chrs[2], int convert_int);
@@ -41,8 +37,28 @@ class User {
     int student_id_[4];
 
     int points_;
+};
 
-    std::map<std::string, std::string> user_data_;
+class Database {
+
+  public:
+    Database();
+    Database(std::string path);
+
+    User loadUser(std::string UID);
+
+    int saveUser(User user);
+
+    int addUser(User user);
+    int removeUser(User user);
+
+  private:
+
+  int max_users_;
+
+  std::string file_path_;
+  std::string user_index_[50];
+
 };
 
 #endif
