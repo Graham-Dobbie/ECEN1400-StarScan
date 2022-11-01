@@ -47,18 +47,17 @@ class Database {
 
     User loadUser(std::string UID);
 
-    int saveUser(User user);
+    int saveUser(std::string UID, User user);
 
     int addUser(User user);
     int removeUser(User user);
 
   private:
+    int max_users_;
+    int numb_users_;
 
-  int max_users_;
-
-  std::string file_path_;
-  std::string user_index_[50];
-
+    std::string file_path_;
+    std::string user_index_[50];
 };
 
 #endif

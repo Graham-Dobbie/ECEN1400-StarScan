@@ -127,7 +127,7 @@ int main() {
     int test_points = 3;
 
     User test_u = User();
-    if (test_u.loadUser(test_line) == 0) {
+    if (test_u.load(test_line) == 0) {
 
         if (test_u.getUsername() == "Graham") {
             cout << "loadUser username working" << endl;
@@ -158,11 +158,11 @@ int main() {
     }
     cout << endl;
 
-    if (test_u.saveUser() == test_line) {
+    if (test_u.save() == test_line) {
         cout << "saveUser points working" << endl;
     } else {
         cout << "saveUser not working" << endl;
-        cout << test_u.saveUser();
+        cout << test_u.save();
     }
     cout << endl;
 

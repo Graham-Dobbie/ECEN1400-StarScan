@@ -1,6 +1,6 @@
 #include "user.hpp"
 
-User::User() : student_name_("NULL"), points_(-1), student_name_max_length__(16) {}
+User::User() : student_name_("NULL"), points_(-1), student_name_max_length__(16) { setUID("0 0 0 0"); }
 
 User::User(std::string name, std::string uid) : student_name_(name), points_(0), student_name_max_length__(16) {
 
@@ -202,9 +202,9 @@ int User::split(std::string line, std::string comps[], int max_size) {
     }
 }
 
-Database::Database() : file_path_(""), max_users_(0) {}
+Database::Database() : file_path_(""), max_users_(0), numb_users_(0) {}
 
-Database::Database(std::string path) : file_path_(path), max_users_(50) {
+Database::Database(std::string path) : file_path_(path), max_users_(50), numb_users_(0) {
 
     std::ifstream file;
 
@@ -217,49 +217,236 @@ Database::Database(std::string path) : file_path_(path), max_users_(50) {
     int total_users = 0;
     User load_user;
 
-    while((!file.eof()) and (total_users < max_users_)){
+    while ((!file.eof()) and (total_users < max_users_)) {
 
         std::string line;
         std::getline(file, line);
 
         load_user.load(line);
 
-        if(load_user.load(line) == 0){
-            user_index_[total_users] = load_user.getUID();
-            total_users++;
-            
-        }else{
-            std::cout << "Warning: line '" << line << "' is not a valid user" << std::endl;
-        }
+        if (line.length() > 0) {
+            if (load_user.load(line) == 0) {
+                user_index_[total_users] = load_user.getUID();
+                total_users++;
 
+            } else {
+                std::cout << "Warning: line '" << line << "' is not a valid user" << std::endl;
+            }
+        }
     }
 
-    if (!file.eof()){
+    if (!file.eof()) {
         std::cout << "Warning: you reached the max amount of users some might not have been added" << std::endl;
     }
 
+    numb_users_ = total_users;
+
+    file.close();
 }
 
-
-User Database::loadUser(std::string UID){
+User Database::loadUser(std::string UID) {
 
     std::ifstream file;
     std::string line;
     User return_user = User();
-    
-    int uid_index = -1;
-    for(int i = 0; i < max_users_; i++){
-        std::getline(file , line);
 
-        if( user_index_[i] == UID){
-            return_user.load(line);
-            return return_user;
+    file.open(file_path_);
+    if (file.fail()) {
+        std::cout << "file failed to open" << std::endl;
+        return return_user;
+    }
+
+    int uid_index = -1;
+    for (int i = 0; i < max_users_; i++) {
+        std::getline(file, line);
+
+        if (user_index_[i] == UID) {
+            if (line.length() != 0) {
+                return_user.load(line);
+                return return_user;
+            } else {
+                std::cout << "User deleted" << std::endl;
+                return return_user;
+            }
         }
     }
-    
+
     std::cout << "Couldn't find user" << std::endl;
+    file.close();
+
     return return_user;
+}
 
+int Database::saveUser(std::string UID, User user) {
 
+    std::ifstream file;
+    std::ofstream temp_file;
 
+    std::string line;
+
+    file.open(file_path_);
+    if (file.fail()) {
+        std::cout << "file failed to open" << std::endl;
+        return 1;
+    }
+
+    temp_file.open("temp_users.csv");
+    if (temp_file.fail()) {
+        std::cout << "temp file failed to open" << std::endl;
+        return 2;
+    }
+
+    for (int i = 0; ((i < max_users_) and (!file.eof())); i++) {
+        std::getline(file, line);
+
+        if (user_index_[i] == UID) {
+            temp_file << user.save();
+        } else {
+            temp_file << line;
+        }
+        if (!file.eof()) {
+            temp_file << "\n";
+        }
+    }
+
+    file.close();
+    temp_file.close();
+    std::ifstream temp_file_read;
+    std::ofstream file_write;
+
+    file_write.open(file_path_);
+    if (file.fail()) {
+        std::cout << "file failed to open" << std::endl;
+        return 1;
+    }
+
+    temp_file_read.open("temp_users.csv");
+    if (file.fail()) {
+        std::cout << "file failed to open" << std::endl;
+        return 1;
+    }
+
+    int gone_through = 0;
+    while (!temp_file_read.eof()) {
+
+        std::getline(temp_file_read, line);
+        file_write << line;
+
+        gone_through++;
+
+        if (gone_through < numb_users_) {
+            file_write << "\n";
+        }
+    }
+
+    return 0;
+}
+
+int Database::addUser(User user) {
+
+    if (numb_users_ >= max_users_) {
+        return 2;
+    }
+
+    for (std::string uid : user_index_) {
+        if (uid == user.getUID()) {
+            return 3;
+        }
+    }
+
+    std::ofstream app_file(file_path_, std::ios::app);
+
+    if (app_file.fail()) {
+        std::cout << "file failed to open" << std::endl;
+        return 1;
+    }
+
+    app_file << "\n" << user.save();
+
+    user_index_[numb_users_] = user.getUID();
+
+    numb_users_++;
+
+    return 0;
+}
+
+int Database::removeUser(User user) {
+
+    int place = -1;
+    for (int i = 0; i < numb_users_; i++) {
+
+        if (user_index_[i] == user.getUID()) {
+            place = i;
+            break;
+        }
+    }
+
+    if (place == -1) {
+        return 1;
+    }
+
+    user_index_[place] = "0 0 0 0";
+
+    std::ifstream file;
+    std::ofstream temp_file;
+
+    std::string line;
+
+    file.open(file_path_);
+    if (file.fail()) {
+        std::cout << "file failed to open" << std::endl;
+        return 1;
+    }
+
+    temp_file.open("temp_users.csv");
+    if (temp_file.fail()) {
+        std::cout << "temp file failed to open" << std::endl;
+        return 2;
+    }
+
+    for (int i = 0; ((i < max_users_) and (!file.eof())); i++) {
+        std::getline(file, line);
+
+        if (i != place) {
+            temp_file << line;
+
+            if (!file.eof()) {
+                temp_file << "\n";
+            }
+        }
+    }
+
+    numb_users_--;
+
+    file.close();
+    temp_file.close();
+    std::ifstream temp_file_read;
+    std::ofstream file_write;
+
+    file_write.open(file_path_);
+    if (file.fail()) {
+        std::cout << "file failed to open" << std::endl;
+        return 1;
+    }
+
+    temp_file_read.open("temp_users.csv");
+    if (file.fail()) {
+        std::cout << "file failed to open" << std::endl;
+        return 1;
+    }
+
+    int gone_through = 0;
+    while (!temp_file_read.eof()) {
+
+        std::getline(temp_file_read, line);
+        file_write << line;
+
+        gone_through++;
+
+        if (gone_through < numb_users_) {
+            file_write << "\n";
+        }
+    }
+
+    return 0;
 }
