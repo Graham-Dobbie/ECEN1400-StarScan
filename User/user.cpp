@@ -2,23 +2,22 @@
 
 User::User() : student_name_("NULL"), points_(-1), student_name_max_length__(16) { setUID("0 0 0 0"); }
 
-User::User(std::string name, std::string uid) : student_name_(name), points_(0), student_name_max_length__(16) {
+User::User(String name, String uid) : student_name_(name), points_(0), student_name_max_length__(16) {
 
     int set_uid_code = setUID(uid);
     if (set_uid_code == 1) {
-        std::cout << "UID incorect" << std::endl;
+        Serial.println("UID incorect");
     }
 }
 
-std::string User::getUsername() { return student_name_; }
+String User::getUsername() { return student_name_; }
 
-int User::setUsername(std::string name) {
+int User::setUsername(String name) {
 
     if (name.length() > student_name_max_length__) {
 
-        student_name_ = name.substr(0, 15);
+        student_name_ = name.substring(0, 15);
         return 1;
-
     } else {
 
         student_name_ = name;
@@ -26,9 +25,9 @@ int User::setUsername(std::string name) {
     }
 }
 
-std::string User::getUID() {
+String User::getUID() {
 
-    std::string return_string;
+    String return_string;
 
     for (int i = 0; i < 4; i++) {
 
@@ -41,12 +40,12 @@ std::string User::getUID() {
         return_string += ' ';
     }
 
-    return return_string.substr(0, 11);
+    return return_string.substring(0, 11);
 }
 
-int User::setUID(std::string uid) {
+int User::setUID(String uid) {
 
-    std::string hexes[4];
+    String hexes[4];
 
     int current_hex = 0;
     for (int i = 0; i < uid.length(); i++) {
@@ -55,11 +54,9 @@ int User::setUID(std::string uid) {
 
             if (current_hex <= 3) {
                 current_hex++;
-
             } else {
                 return 1;
             }
-
         } else {
             hexes[current_hex] += uid[i];
         }
@@ -88,38 +85,49 @@ int User::setPoints(int points) {
 
 int User::getPoints() { return points_; }
 
-int User::load(std::string load_string) { // uid1,uid2,uid3,uid4,name,points
+int User::load(String load_string) { // uid1,uid2,uid3,uid4,name,points
 
-    std::string components[10];
-    int numb_splits = split(load_string, components, 10);
+    String components[10];
+    
+    char parse_s[50];
+    load_string.toCharArray(parse_s, 50);
+
+    int numb_splits = split(parse_s, components, 10);
+    int i = 1;
+    // for(String comp : components){
+    //     Serial.print(i);
+    //     i++;
+    //     Serial.println(comp);
+    // }
 
     if (numb_splits < 0) {
+        Serial.println("Bad split");
         return 1;
     }
 
     for (int i = 0; i < 4; i++) {
-        student_id_[i] = std::stoi(components[i]);
+        student_id_[i] = components[i].toInt();
     }
 
     setUsername(components[4]);
-    setPoints(stoi(components[5]));
+    setPoints(components[5].toInt());
 
     return 0;
 }
 
-std::string User::save() { // uid1,uid2,uid3,uid4,name,points
+String User::save() { // uid1,uid2,uid3,uid4,name,points
 
-    std::string data;
+    String data;
 
     for (int id : student_id_) {
-        data += std::to_string(id);
+        data += String(id);
         data += ",";
     }
 
     data += student_name_;
     data += ",";
 
-    data += std::to_string(points_);
+    data += String(points_);
 
     return data;
 }
@@ -177,12 +185,20 @@ int User::chrToInt(char hex_value) {
     }
 }
 
-int User::split(std::string line, std::string comps[], int max_size) {
+int User::split(char line[], String comps[], int max_size) {
 
     int err_code = 0;
     int comp_pos = 0;
 
-    for (int pos = 0; (pos < line.length()) and (err_code == 0); pos++) {
+    int line_len = sizeof(*line)/sizeof(line[0]);
+
+    Serial.println("here");
+    Serial.println(line);
+    // Serial.println(line_len);
+
+    for (int pos = 0; (pos < line_len) and (err_code == 0); pos++) {
+        Serial.println("in loop");
+
         if (line[pos] == ',') {
 
             comp_pos++;
@@ -202,166 +218,180 @@ int User::split(std::string line, std::string comps[], int max_size) {
     }
 }
 
-Database::Database() : file_path_(""), max_users_(0), numb_users_(0) {}
+Database::Database() : max_users_(0), numb_users_(0) {}
 
-Database::Database(std::string path) : file_path_(path), max_users_(50), numb_users_(0) {
+Database::Database(String path) : max_users_(50), numb_users_(0){
+    if (!SD.begin(SD_chip_select__)) {
+        Serial.println("SD card failed to open");
+        while (true) {
+        }
+    }
 
-    std::ifstream file;
+    if(path.length() > 12){
+        Serial.println("File name too long");
+    }
+    path.toCharArray(file_path_, 12);
 
-    file.open(file_path_);
-    if (file.fail()) {
-        std::cout << "file failed to open" << std::endl;
-        return;
+    if (!SD.exists(file_path_)) {
+        Serial.println("File failed to open");
+        SD.open(file_path_, FILE_WRITE);
+    }
+
+    File file = SD.open(file_path_, FILE_READ);
+
+    if (!file) {
+        Serial.println("Cant read file");
     }
 
     int total_users = 0;
     User load_user;
 
-    while ((!file.eof()) and (total_users < max_users_)) {
+    while (!(file.peek() == -1) and (total_users < max_users_)) {
 
-        std::string line;
-        std::getline(file, line);
-
-        load_user.load(line);
+        String line = getline(file);
 
         if (line.length() > 0) {
             if (load_user.load(line) == 0) {
                 user_index_[total_users] = load_user.getUID();
                 total_users++;
-
             } else {
-                std::cout << "Warning: line '" << line << "' is not a valid user" << std::endl;
+                Serial.println("Warning: line '" + line + "' is not a valid user");
             }
         }
     }
 
-    if (!file.eof()) {
-        std::cout << "Warning: you reached the max amount of users some might not have been added" << std::endl;
+    if (!file.read() == -1) {
+        Serial.println("Warning: you reached the max amount of users some might not have been added");
     }
 
     numb_users_ = total_users;
 
+    for(String uid : user_index_){
+        if(uid.length() != 0){
+            Serial.println(uid);
+        }
+        
+    }
+
     file.close();
+    SD.end();
 }
 
-User Database::loadUser(std::string UID) {
+User Database::loadUser(String UID) {
 
-    std::ifstream file;
-    std::string line;
+    String line;
     User return_user = User();
 
-    file.open(file_path_);
-    if (file.fail()) {
-        std::cout << "file failed to open" << std::endl;
+    if (!SD.exists(file_path_)) {
+        Serial.println("file failed to open");
         return return_user;
+    }
+
+    File file = SD.open(file_path_, FILE_READ);
+
+    if (!file) {
+        Serial.println("Cant read file");
     }
 
     int uid_index = -1;
     for (int i = 0; i < max_users_; i++) {
-        std::getline(file, line);
+        line = getline(file);
 
         if (user_index_[i] == UID) {
             if (line.length() != 0) {
                 return_user.load(line);
                 return return_user;
             } else {
-                std::cout << "User deleted" << std::endl;
+                Serial.println("User deleted");
                 return return_user;
             }
         }
     }
 
-    std::cout << "Couldn't find user" << std::endl;
+    Serial.println("Couldn't find user");
     file.close();
 
     return return_user;
 }
 
-int Database::saveUser(std::string UID, User user) {
+int Database::saveUser(String UID, User user) {
 
-    std::ifstream file;
-    std::ofstream temp_file;
+    String line;
 
-    std::string line;
-
-    file.open(file_path_);
-    if (file.fail()) {
-        std::cout << "file failed to open" << std::endl;
+    if (!SD.exists(file_path_)) {
+        Serial.println("file failed to open");
         return 1;
     }
+    File file = SD.open(file_path_, FILE_WRITE);
 
-    temp_file.open("temp_users.csv");
-    if (temp_file.fail()) {
-        std::cout << "temp file failed to open" << std::endl;
+    int place = -1;
+    for (int i = 0; i < max_users_; i++) {
+        if (UID == user_index_[i]) {
+            place = i;
+            break;
+        }
+    }
+
+    if (place == -1) {
+        Serial.println("User doesn't exist");
         return 2;
     }
 
-    for (int i = 0; ((i < max_users_) and (!file.eof())); i++) {
-        std::getline(file, line);
-
-        if (user_index_[i] == UID) {
-            temp_file << user.save();
-        } else {
-            temp_file << line;
-        }
-        if (!file.eof()) {
-            temp_file << "\n";
-        }
-    }
-
-    file.close();
-    temp_file.close();
-    std::ifstream temp_file_read;
-    std::ofstream file_write;
-
-    file_write.open(file_path_);
-    if (file.fail()) {
-        std::cout << "file failed to open" << std::endl;
-        return 1;
-    }
-
-    temp_file_read.open("temp_users.csv");
-    if (file.fail()) {
-        std::cout << "file failed to open" << std::endl;
-        return 1;
-    }
-
-    int gone_through = 0;
-    while (!temp_file_read.eof()) {
-
-        std::getline(temp_file_read, line);
-        file_write << line;
-
-        gone_through++;
-
-        if (gone_through < numb_users_) {
-            file_write << "\n";
-        }
-    }
+    file.seek(place * 50);
+    file.print(user.save());
 
     return 0;
 }
 
 int Database::addUser(User user) {
 
+    if (!SD.begin(SD_chip_select__)) {
+
+        Serial.println("SD card failed to open");
+        while (true) {
+        }
+    }
+
     if (numb_users_ >= max_users_) {
+        Serial.println("Reach the maximum number of users");
         return 2;
     }
 
-    for (std::string uid : user_index_) {
+    for (String uid : user_index_) {
         if (uid == user.getUID()) {
+            Serial.println("User already exists");
             return 3;
         }
     }
 
-    std::ofstream app_file(file_path_, std::ios::app);
-
-    if (app_file.fail()) {
-        std::cout << "file failed to open" << std::endl;
+    if (!SD.exists(file_path_)) {
+        Serial.print("file failed to open: ");
+        Serial.println(file_path_);
         return 1;
     }
 
-    app_file << "\n" << user.save();
+    File file = SD.open(file_path_, O_WRITE | O_READ);
+
+    if (!file) {
+        Serial.println("Cant open file");
+    }
+    file.seek(file.size() - 1);
+    String f_data = user.save();
+
+    while (f_data.length() < 48) {
+        f_data += '\x1F';
+    }
+
+    Serial.println(f_data);
+    Serial.println(file.println(f_data));
+    // if(file.print(f_data) < 50){
+    //     Serial.println("Didn't write data");
+    //     file.close();
+    //     return 4;
+    // }
+
+    file.close();
+    SD.end();
 
     user_index_[numb_users_] = user.getUID();
 
@@ -387,66 +417,40 @@ int Database::removeUser(User user) {
 
     user_index_[place] = "0 0 0 0";
 
-    std::ifstream file;
-    std::ofstream temp_file;
-
-    std::string line;
-
-    file.open(file_path_);
-    if (file.fail()) {
-        std::cout << "file failed to open" << std::endl;
+    if (!SD.exists(file_path_)) {
+        Serial.println("file failed to open");
         return 1;
     }
+    File file = SD.open(file_path_, FILE_WRITE);
 
-    temp_file.open("temp_users.csv");
-    if (temp_file.fail()) {
-        std::cout << "temp file failed to open" << std::endl;
-        return 2;
+    String f_data;
+
+    while (f_data.length() < 49) {
+        f_data += ' ';
     }
+    f_data += '\n';
 
-    for (int i = 0; ((i < max_users_) and (!file.eof())); i++) {
-        std::getline(file, line);
-
-        if (i != place) {
-            temp_file << line;
-
-            if (!file.eof()) {
-                temp_file << "\n";
-            }
-        }
-    }
+    file.print(f_data);
 
     numb_users_--;
 
     file.close();
-    temp_file.close();
-    std::ifstream temp_file_read;
-    std::ofstream file_write;
-
-    file_write.open(file_path_);
-    if (file.fail()) {
-        std::cout << "file failed to open" << std::endl;
-        return 1;
-    }
-
-    temp_file_read.open("temp_users.csv");
-    if (file.fail()) {
-        std::cout << "file failed to open" << std::endl;
-        return 1;
-    }
-
-    int gone_through = 0;
-    while (!temp_file_read.eof()) {
-
-        std::getline(temp_file_read, line);
-        file_write << line;
-
-        gone_through++;
-
-        if (gone_through < numb_users_) {
-            file_write << "\n";
-        }
-    }
 
     return 0;
+}
+
+String Database::getline(File file) {
+
+    String line;
+
+    char c = file.read();
+    while ((c != -1) and (c != '\n')) {
+        if(c != '\x1F'){
+            line += c;
+            
+        }
+        c = file.read();
+    }
+
+    return line;
 }

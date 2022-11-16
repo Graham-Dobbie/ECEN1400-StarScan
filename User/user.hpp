@@ -1,21 +1,22 @@
 #ifndef User_h
 #define User_h
+#define SD_chip_select__ 9
 
-#include <fstream>
-#include <iostream>
-#include <map>
-#include <string>
+#include <Arduino.h>
+#include <SD.h>
+#include <SPI.h>
 
-class User {
-  public:
+class User
+{
+public:
     User();
-    User(std::string name, std::string uid);
+    User(String name, String uid);
 
-    std::string getUsername();
-    int setUsername(std::string name);
+    String getUsername();
+    int setUsername(String name);
 
-    std::string getUID();
-    int setUID(std::string uid);
+    String getUID();
+    int setUID(String uid);
 
     int givePoint();
     int givePoints(int points);
@@ -23,41 +24,44 @@ class User {
 
     int getPoints();
 
-    int load(std::string load_string);
-    std::string save();
+    int load(String load_string);
+    String save();
 
     int chrToInt(char hex);
     int intToChr(char chrs[2], int convert_int);
 
-    int split(std::string line, std::string comps[], int max_size);
+    int split(char line[], String comps[], int max_size);
 
-  private:
-    std::string student_name_;
+private:
+    String student_name_;
     int student_name_max_length__;
     int student_id_[4];
 
     int points_;
 };
 
-class Database {
+class Database
+{
 
-  public:
+public:
     Database();
-    Database(std::string path);
+    Database(String path);
 
-    User loadUser(std::string UID);
+    User loadUser(String UID);
 
-    int saveUser(std::string UID, User user);
+    int saveUser(String UID, User user);
 
     int addUser(User user);
     int removeUser(User user);
 
-  private:
+    String getline(File file);
+
+private:
     int max_users_;
     int numb_users_;
 
-    std::string file_path_;
-    std::string user_index_[50];
+    char file_path_[12];
+    String user_index_[50];
 };
 
 #endif
