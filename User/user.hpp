@@ -30,7 +30,7 @@ public:
     int chrToInt(char hex);
     int intToChr(char chrs[2], int convert_int);
 
-    int split(char line[], String comps[], int max_size);
+    int split(char line[], int line_len, String comps[], int max_size);
 
 private:
     String student_name_;
@@ -45,7 +45,7 @@ class Database
 
 public:
     Database();
-    Database(String path);
+    Database(char path[]);
 
     User loadUser(String UID);
 
@@ -60,7 +60,7 @@ private:
     int max_users_;
     int numb_users_;
 
-    char file_path_[12];
+    char file_path_[13];
     String user_index_[50];
 };
 

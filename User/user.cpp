@@ -88,11 +88,12 @@ int User::getPoints() { return points_; }
 int User::load(String load_string) { // uid1,uid2,uid3,uid4,name,points
 
     String components[10];
-    
-    char parse_s[50];
-    load_string.toCharArray(parse_s, 50);
 
-    int numb_splits = split(parse_s, components, 10);
+    int str_len = load_string.length() + 1;
+    char parse_s[str_len];
+    load_string.toCharArray(parse_s, str_len);
+
+    int numb_splits = split(parse_s, str_len, components, 10);
     int i = 1;
     // for(String comp : components){
     //     Serial.print(i);
@@ -185,23 +186,18 @@ int User::chrToInt(char hex_value) {
     }
 }
 
-int User::split(char line[], String comps[], int max_size) {
+int User::split(char line[], int line_len, String comps[], int max_size) {
 
     int err_code = 0;
     int comp_pos = 0;
 
-    int line_len = sizeof(*line)/sizeof(line[0]);
-
-    Serial.println("here");
-    Serial.println(line);
-    // Serial.println(line_len);
-
     for (int pos = 0; (pos < line_len) and (err_code == 0); pos++) {
-        Serial.println("in loop");
+ 
 
         if (line[pos] == ',') {
 
             comp_pos++;
+
 
             if (comp_pos >= max_size) {
                 err_code = -1;
@@ -220,21 +216,25 @@ int User::split(char line[], String comps[], int max_size) {
 
 Database::Database() : max_users_(0), numb_users_(0) {}
 
-Database::Database(String path) : max_users_(50), numb_users_(0){
+Database::Database(char path[]) : max_users_(50), numb_users_(0){
     if (!SD.begin(SD_chip_select__)) {
         Serial.println("SD card failed to open");
         while (true) {
         }
     }
 
-    if(path.length() > 12){
-        Serial.println("File name too long");
+    for(int i = 0; i < 12; i++) {
+      file_path_[i] = path[i];
+      if(path[i] == NULL) break;
     }
-    path.toCharArray(file_path_, 12);
+    file_path_[12] = '\0';
+    
+    Serial.println(file_path_);
 
     if (!SD.exists(file_path_)) {
         Serial.println("File failed to open");
         SD.open(file_path_, FILE_WRITE);
+        while(true){}
     }
 
     File file = SD.open(file_path_, FILE_READ);
@@ -360,42 +360,43 @@ int Database::addUser(User user) {
     for (String uid : user_index_) {
         if (uid == user.getUID()) {
             Serial.println("User already exists");
-            return 3;
+//            return 3;
         }
+          
     }
 
-    if (!SD.exists(file_path_)) {
-        Serial.print("file failed to open: ");
-        Serial.println(file_path_);
-        return 1;
-    }
+//    if (!SD.exists(file_path_)) {
+//        Serial.print("file failed to open: ");
+//        Serial.println(file_path_);
+//        return 1;
+//    }
 
-    File file = SD.open(file_path_, O_WRITE | O_READ);
-
-    if (!file) {
-        Serial.println("Cant open file");
-    }
-    file.seek(file.size() - 1);
-    String f_data = user.save();
-
-    while (f_data.length() < 48) {
-        f_data += '\x1F';
-    }
-
-    Serial.println(f_data);
-    Serial.println(file.println(f_data));
-    // if(file.print(f_data) < 50){
-    //     Serial.println("Didn't write data");
-    //     file.close();
-    //     return 4;
-    // }
-
-    file.close();
-    SD.end();
-
-    user_index_[numb_users_] = user.getUID();
-
-    numb_users_++;
+//    File file = SD.open(file_path_, O_WRITE | O_READ);
+//
+//    if (!file) {
+//        Serial.println("Cant open file");
+//    }
+//    file.seek(file.size() - 1);
+//    String f_data = user.save();
+//
+//    while (f_data.length() < 48) {
+//        f_data += '\x1F';
+//    }
+//
+//    Serial.println(f_data);
+//    Serial.println(file.println(f_data));
+//    // if(file.print(f_data) < 50){
+//    //     Serial.println("Didn't write data");
+//    //     file.close();
+//    //     return 4;
+//    // }
+//
+//    file.close();
+//    SD.end();
+//
+//    user_index_[numb_users_] = user.getUID();
+//
+//    numb_users_++;
 
     return 0;
 }
@@ -451,6 +452,7 @@ String Database::getline(File file) {
         }
         c = file.read();
     }
+    file.read();
 
     return line;
 }
