@@ -1,10 +1,11 @@
 #include "animation.h";
 
-LiquidCrystal lcd(9,8,5,4,3,2);
-
+//LiquidCrystal lcd(9,8,5,4,3,2);
+LiquidCrystal lcd(33,13,32,27,14,12);
 void lcdClear(){
   lcd.clear();
   }
+  
 void lcdSetup(){
   lcd.begin(16,2);
 }
