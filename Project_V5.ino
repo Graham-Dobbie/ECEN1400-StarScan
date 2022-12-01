@@ -5,9 +5,6 @@
 #include "animation.h"
 #include "playSong.h"
 
-
-
-
 //#define SS_PIN 10
 //#define RST_PIN 6
 
@@ -19,16 +16,12 @@ MFRC522 mfrc522(SS_PIN, RST_PIN);
 
 void setup()
 {
-  Serial.begin(9600);  
+  Serial.begin(115200);  
   SPI.begin();      
   mfrc522.PCD_Init();   
   Serial.println("Approximate your card to the reader...");
   Serial.println();
   lcdSetup();
-
-   for (byte i = 0; i < 6; i++) {
-
-  }
 
 }
 
@@ -94,6 +87,7 @@ void loop()
       delay(1000);
       lcdAnimation("Andrew", 31);
       playSong();
+      //Serial.print(xPortGetCoreID());
       }
       
     
