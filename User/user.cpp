@@ -85,27 +85,26 @@ int User::setPoints(int points) {
 
 int User::getPoints() { return points_; }
 
-int User::load(char load_string[], int str_len) { // uid1,uid2,uid3,uid4,name,points
+int User::load(String load_string) { // uid1,uid2,uid3,uid4,name,points
 
     String components[10];
-    for(int i = 0; i < 10 ; i++){
-        components[i] = "";
-    }
 
-    int numb_splits = split(load_string, str_len, components, 10);
+    int str_len = load_string.length() + 1;
+    char parse_s[str_len];
+    load_string.toCharArray(parse_s, str_len);
+
+    int numb_splits = split(parse_s, str_len, components, 10);
     int i = 1;
+    // for(String comp : components){
+    //     Serial.print(i);
+    //     i++;
+    //     Serial.println(comp);
+    // }
 
-    if ((numb_splits < 0) or (numb_splits > 6)) {
+    if (numb_splits < 0) {
         Serial.println("Bad split");
         return 1;
     }
-
-    Serial.println("Components");
-    Serial.println(numb_splits);
-    for(int i = 0; i < numb_splits; i++){
-        Serial.println(components[i]);
-    }
-    Serial.println();
 
     for (int i = 0; i < 4; i++) {
         student_id_[i] = components[i].toInt();
@@ -192,43 +191,21 @@ int User::split(char line[], int line_len, String comps[], int max_size) {
     int err_code = 0;
     int comp_pos = 0;
 
-    // Serial.println("here");
-    
-    
-    Serial.println("Split");
-    Serial.println(line_len);
-    for(int i = 0; i < line_len; i++){
-        Serial.print(line[i]);
-    }
-    Serial.println();
-
-    for (int pos = 0; pos < line_len; pos++) {
-        // Serial.println("in loop");
+    for (int pos = 0; (pos < line_len) and (err_code == 0); pos++) {
+ 
 
         if (line[pos] == ',') {
-            Serial.println(",");
 
             comp_pos++;
 
 
             if (comp_pos >= max_size) {
-                Serial.print("Too big");
-                return -1;
+                err_code = -1;
             }
         } else {
-            Serial.print(line[pos]);
-            comps[comp_pos].concat(line[pos]);
+            comps[comp_pos] += line[pos];
         }
     }
-    Serial.println();
-    
-
-    Serial.println(comp_pos + 1);
-    for(int i = 0; i < comp_pos + 1; i++){
-        Serial.println(comps[i]);
-    }
-    Serial.println("Split done");
-
 
     if (err_code != 0) {
         return err_code;
@@ -238,215 +215,136 @@ int User::split(char line[], int line_len, String comps[], int max_size) {
 }
 
 
-Database::Database(): max_users_(0), numb_users_(0){};
+void readCSV(File file, int points_list[], int numb_users) {
 
-Database::Database(File file) : max_users_(50), numb_users_(0), user_file_(file){
+    file.seek(0);
+    int current_users = 0;
 
-    int total_users = 0;
-    User load_user;
-    
-    char line[50];
-    for(int i = 0; i < 50; i++){
-        line[i] = '\x0';
-    }
+    char ctoi_holder[4] = {'\0' , '\0' , '\0' , '\0'};
+    int holder_place = 0;
 
-    user_file_.seek(0);
-    Serial.println(user_file_.peek());
+    while((file.peek() != -1)){
+        char c = file.read();
+        
+        if(c != ','){
 
-
-    while ((!(user_file_.peek() == -1)) and (total_users < max_users_)) {
-
-        int line_len = getline(user_file_, line);
-
-        if (line_len > 0) {
-            if (load_user.load(line, line_len) == 0) {
-                user_index_[total_users] = load_user.getUID();
-                total_users++;
-            } else {
-                // Serial.println("Warning: line '" + line + "' is not a valid user");
+            if(c != '\x0'){
+                // Serial.print(c);
+                // Serial.print(" ");
+            }else{
+                return;
             }
+
+            if(holder_place < 4){
+
+                ctoi_holder[holder_place] = c;
+                holder_place++;
+
+            }else{
+                Serial.println("Too many points");
+                return;
+            }
+            
+
         }else{
-            break;
-        }
-    }
+            holder_place = 0;
+            
+            int point = 0;
+            int mult = 1;
 
-    if (!user_file_.read() == -1) {
-        Serial.println("Warning: you reached the max amount of users some might not have been added");
-    }
+            for(int i = 3; i >= 0; i--) {
 
-    numb_users_ = total_users;
-    Serial.println(numb_users_);
+                int ic = (int)ctoi_holder[i];
 
-    for(int i = 0; i < numb_users_; i++){
-        
-        Serial.println(user_index_[i]);
-        
-        
-    }
-}
+                if((ic >= 48) and (ic <= 57)){
+                    point += mult*(ic - 48);
+                    mult = mult*10;
+                }
 
-User Database::loadUser(String UID) {
-
-    char line[50];
-    for(int i = 0; i < 50; i++){
-        line[i] = '\x0';
-    }
-
-    User return_user = User();
-    user_file_.seek(0);
-
-    int uid_index = -1;
-    for (int i = 0; i < max_users_; i++) {
-        int line_len = getline(user_file_, line);
-
-        if (user_index_[i] == UID) {
-            if (line_len != 0) {
-                return_user.load(line, line_len);
-                return return_user;
-            } else {
-                Serial.println("User deleted");
-                return return_user;
             }
+
+            // Serial.println(point);
+            for(int i = 0; i < 4; i++){
+                ctoi_holder[i] = '\x0';
+            }
+
+            points_list[current_users] = point;
+
+            current_users++;
         }
-    }
 
-    Serial.println("Couldn't find user");
-    
-
-    return return_user;
-}
-
-int Database::saveUser(String UID, User user) {
-
-    String line;
-    user_file_.seek(0);
-
-
-    int place = -1;
-    for (int i = 0; i < max_users_; i++) {
-        if (UID == user_index_[i]) {
-            place = i;
-            break;
+        if(current_users >= numb_users){
+            // Serial.println("Done");
+            return;
         }
-    }
-
-    if (place == -1) {
-        Serial.println("User doesn't exist");
-        return 2;
-    }
-
-    user_file_.seek(place * 50);
-    user_file_.print(user.save());
-
-    return 0;
-}
-
-int Database::addUser(User user) {
-
-    if(!user_file_){
-        Serial.println("Can't Access File");
-    }
-
-    user_file_.seek(0);
-
-    if (numb_users_ >= max_users_) {
-        Serial.println("Reach the maximum number of users");
-        return 2;
-    }
-
-    for (int i = 0; i < numb_users_; i++) {
-        if (user_index_[i] == user.getUID()) {
-            Serial.println("User already exists");
-//            return 3;
-        }
-          
-    }
-
-    user_file_.seek(user_file_.size() - 1);
-    String f_data = user.save();
-
-    while (f_data.length() < 48) {
-        f_data.concat('\x1F');
     }
     
 
+    return;
 
-    Serial.println("Add user");
-    Serial.println(f_data.length());
-    Serial.println(f_data);
-    int lines_writen = user_file_.println(f_data);
-    Serial.println(lines_writen);
-
-    if(lines_writen < 50){
-        Serial.println("Didn't write data");
-        
-        return 4;
-    }
-
-
-    user_index_[numb_users_] = user.getUID();
-
-    numb_users_++;
-
-    return 0;
 }
 
-int Database::removeUser(User user) {
 
-    if(!user_file_){
-        Serial.println("Can't Access File");
+void writeCSV(File file, int points_list[], int numb_users){
+
+    char writeStr[500];
+    for(int i = 0; i < 500; i++){
+        writeStr[i] = '\x0';
     }
 
-    user_file_.seek(0);
+    int place = 0;
+    for(int i = 0; i < numb_users; i++){
 
-    int place = -1;
-    for (int i = 0; i < numb_users_; i++) {
+        int point = points_list[i];
 
-        if (user_index_[i] == user.getUID()) {
-            place = i;
-            break;
+        if(point > 9999){
+            Serial.println("Too many points");
+            return;
+        } else{
+            // Serial.println(point);
+            int ones = point % 10;
+            int tens = (point - ones) % 100;
+            int hundreds = (point - tens -ones) % 1000;
+            int thousands = (point - hundreds - tens - ones);
+
+            if(point > 999){
+                // Serial.print(thousands/1000);
+                writeStr[place] = (thousands/1000) + 48;
+                place++;
+            }
+            if(point > 99){
+                // Serial.print(hundreds/100);
+                writeStr[place] = (hundreds/100) + 48;
+                place++;
+            }
+            if(point > 9){
+                // Serial.print(tens/10);
+                writeStr[place] = (tens/10) + 48;
+                place++;
+            }
+            
+            // Serial.println(ones);
+            writeStr[place] = ones + 48;
+            place++;
+
+            
+            writeStr[place] = ',';
+            place++;
+            
+            
+
         }
+
     }
 
-    if (place == -1) {
-        return 1;
-    }
-
-    user_index_[place] = "0 0 0 0";
-
-
-    String f_data;
-
-    while (f_data.length() < 49) {
-        f_data += ' ';
-    }
-    f_data += '\n';
-
-    user_file_.print(f_data);
-
-    numb_users_--;
-
-    return 0;
-}
-
-int Database::getline(File file, char line[]) {
-
-    int pos = 0;
-    int numb_chars = 0;
-
-    char c = file.read();
-    Serial.println("Getline");
-    while ((c != -1) and (c != '\r') and (c != '\n') and (pos < 50)) {
+    // for(int i = 0; i < 500; i++){
+    //     if(writeStr[i] != '\x0'){
+    //         Serial.print(writeStr[i]);
+    //     }
         
-        if(c != '\x1F'){
-            line[pos] = c;
-            numb_chars++;
-        }
-        Serial.print(line[pos]);
-        pos++;
-        c = file.read();
-    }
-    Serial.println();
+    // }
+    file.seek(0);
+    file.write(writeStr);
 
-    return numb_chars;
+    return;
 }

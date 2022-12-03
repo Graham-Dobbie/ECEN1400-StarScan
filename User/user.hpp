@@ -24,13 +24,13 @@ public:
 
     int getPoints();
 
-    int load(char load_string[], int str_len);
+    int load(String load_string);
     String save();
 
     int chrToInt(char hex);
     int intToChr(char chrs[2], int convert_int);
 
-    int split(char line[], int len, String comps[], int max_size);
+    int split(char line[], int line_len, String comps[], int max_size);
 
 private:
     String student_name_;
@@ -40,28 +40,8 @@ private:
     int points_;
 };
 
-class Database
-{
+void readCSV(File file, int points_list[], int numb_users);
 
-public:
-    Database();
-    Database(File file);
-
-    User loadUser(String UID);
-
-    int saveUser(String UID, User user);
-
-    int addUser(User user);
-    int removeUser(User user);
-
-    int getline(File file, char line[]);
-
-private:
-    int max_users_;
-    int numb_users_;
-
-    File user_file_;
-    String user_index_[50];
-};
+void writeCSV(File file, int points_list[], int numb_users);
 
 #endif
