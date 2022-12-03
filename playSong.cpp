@@ -1,5 +1,6 @@
 #include "playSong.h"
 
+
 int melody[] = {
 
   // Pacman
@@ -10,7 +11,7 @@ int melody[] = {
 
   NOTE_B4, 16,  NOTE_B5, 16,  NOTE_FS5, 16,   NOTE_DS5, 16,  NOTE_B5, 32,  //2
   NOTE_FS5, -16, NOTE_DS5, 8,  NOTE_DS5, 32, NOTE_E5, 32,  NOTE_F5, 32,
-  NOTE_F5, 32,  NOTE_FS5, 32,  NOTE_G5, 32,  NOTE_G5, 32, NOTE_GS5, 32,  NOTE_A5, 16, NOTE_B5, 8, REST, 1
+  NOTE_F5, 32,  NOTE_FS5, 32,  NOTE_G5, 32,  NOTE_G5, 32, NOTE_GS5, 32,  NOTE_A5, 16, NOTE_B5, 8
 };
 
 void playSong() {
@@ -36,16 +37,12 @@ void playSong() {
     }
 
     // we only play the note for 90% of the duration, leaving 10% as a pause
-    //tone(buzzer, melody[thisNote], noteDuration * 0.9);
-    tone(BUZZER_PIN, melody[thisNote], noteDuration * 0.9, BUZZER_CHANNEL);
+    tone(buzzer, melody[thisNote], noteDuration * 0.9);
 
     // Wait for the specief duration before playing the next note.
-
     delay(noteDuration);
 
     // stop the waveform generation before the next note.
-    //noTone(buzzer);
-    noTone(BUZZER_PIN, BUZZER_CHANNEL);
-
+    noTone(buzzer);
   }
 }

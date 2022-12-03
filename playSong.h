@@ -1,12 +1,7 @@
 #ifndef PlaySong_h
 #define PlaySong_h
-#define BUZZER_PIN 16
-#define BUZZER_CHANNEL 0
-
 
 #include <Arduino.h>
-#include <Tone32.h>
-
 
 #define NOTE_B0  31
 #define NOTE_C1  33
@@ -99,8 +94,8 @@
 #define NOTE_DS8 4978
 #define REST      0
 
-//#define buzzer 7
-#define tempo 200
+#define buzzer 9
+#define tempo 105
 
 
 
