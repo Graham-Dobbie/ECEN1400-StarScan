@@ -24,13 +24,13 @@ public:
 
     int getPoints();
 
-    int load(String load_string);
+    int load(char load_string[], int str_len);
     String save();
 
     int chrToInt(char hex);
     int intToChr(char chrs[2], int convert_int);
 
-    int split(char line[], int line_len, String comps[], int max_size);
+    int split(char line[], int len, String comps[], int max_size);
 
 private:
     String student_name_;
@@ -45,7 +45,7 @@ class Database
 
 public:
     Database();
-    Database(char path[]);
+    Database(File file);
 
     User loadUser(String UID);
 
@@ -54,13 +54,13 @@ public:
     int addUser(User user);
     int removeUser(User user);
 
-    String getline(File file);
+    int getline(File file, char line[]);
 
 private:
     int max_users_;
     int numb_users_;
 
-    char file_path_[13];
+    File user_file_;
     String user_index_[50];
 };
 
